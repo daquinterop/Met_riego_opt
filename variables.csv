@@ -1,0 +1,25 @@
+Parametro	Valor
+PP	700000
+FeSi	2010-01-01
+FeCo	2012-09-27
+FeAc	2003-04-27
+PATH_AC_OUT	/home/diego/Documentos/Maestría/Meteorología Agrícola/Proyecto_2/Modelos/AquaCropOS/Resultados
+PROJECT_NAME	Tibaitata
+AQUACROP_PATH	/home/diego/AquaCropOS_v50a/AquaCropOS_v50a
+FILES_PATH	/home/diego/Documentos/Maestría/Meteorología Agrícola/Proyecto_2/Modelos/AquaCropOS
+Ktrx	1.05
+KtrMean	0.8
+FISR	2000-05-01
+Q	50
+PE	500
+RC	0.000278
+VUE	20000
+PA	12000000
+I	0.4
+PW	0
+FM	1000
+PM	400000
+CP	30000
+CHP	80
+LnX	18
+Ef	75
