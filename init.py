@@ -10,7 +10,7 @@ Created on Thu Feb 14 16:41:58 2019
 #import Beneficio_neto
 #import riego
 import os
-os.chdir('/home/diego/Documentos/Maestría/Tesis/Scripts/Metodologia')
+os.chdir('/home/meteo1a/Documentos/Diego/Scripts/Metodologia')
 
 import numpy as np
 import pandas as pd
@@ -21,6 +21,7 @@ import cultivo
 import Beneficio_neto
 from datetime import datetime
 from datetime import timedelta
+import pdb
 
 #Funcion para imprimir el numero legible
 def place_value(number): 
@@ -31,14 +32,14 @@ variables = intercambio_variables.init_variables()
 variables = intercambio_variables.leer_variables(variables)
 
 #Defino las fechas como formato de fecha
-variables['FISR'] = datetime.strptime(variables['FISR'], '%Y-%m-%d')
+#variables['FISR'] = datetime.strptime(variables['FISR'], '%Y-%m-%d')
 variables['FeSi'] = datetime.strptime(variables['FeSi'], '%Y-%m-%d')
 variables['FeAc'] = datetime.strptime(variables['FeAc'], '%Y-%m-%d')
 variables['FeCo'] = datetime.strptime(variables['FeCo'], '%Y-%m-%d')
 variables['FeFP'] = variables['FeAc'] + timedelta(days = 6)
 intercambio_variables.exp_var(variables)
 #Configuro las fechas de simulación 
-AquaCropOS.set_clock('Papa', variables)
+AquaCropOS.set_clock('Maiz', variables)
 
 #Defino la lista de láminas a aplicar
 L_list = np.arange(0,variables['LnX']+1) 
@@ -49,15 +50,16 @@ Ln_list = []
 BN_list = []
 GP_list = []
 CR_list = []
-YSd_list = []
+HI_list = []
 Biof_list = []
 #Inicio el archivo de riegos, conservando los riegos que ya están definidos
-AquaCropOS.init_irrigation(variables, loop = False)
+AquaCropOS.init_irrigation(variables, loop=False)
 #Hora de inicio de la corrida
 hora_inicio = datetime.strftime(datetime.now(), '%H:%M:%S')
-for j in range(7):
+HIx =variables['HIx'] 
+for j in range(variables['HP']):
 #Defino o modifico el día de la aplicación
-    variables['D'] = variables['FeAc'] + timedelta(days = j)
+    variables['D'] = variables['FeAc'] + timedelta(days=j)
     for lamina in L_list:
         #Defino o modifico el valor de la lámina
         variables['Ln'] = lamina
@@ -70,7 +72,7 @@ for j in range(7):
         os.system('octave AquaCropOS_RUN.m')
         print('Corrida ' + datetime.strftime(variables['D'], '%Y-%m-%d') + 
               ' lamina ' + str(lamina) + 'mm')
-        os.chdir('/home/diego/Documentos/Maestría/Tesis/Scripts/Metodologia')
+        os.chdir('/home/meteo1a/Documentos/Diego/Scripts/Metodologia')
         #Calculo de los costos de riego
         riego.Costo_Riego(variables)
         variables = intercambio_variables.imp_var()
@@ -87,25 +89,28 @@ for j in range(7):
                   str(round(variables['InYf'],2)))
         else:
             print('El cultivo aun no emerge')
+            break
         BN_list.append(variables['BN'])
         GP_list.append(variables['GP'])
         CR_list.append(variables['CR'])
         D_list.append(variables['D'])
         Biof_list.append(variables['Biof'])
-        YSd_list.append(variables['YSd'])
+        HI_list.append(variables['HI'])
         Ln_list.append(lamina)
         AquaCropOS.init_irrigation(variables)
+    if not variables['Germ']:
+        break
 
 DF = pd.DataFrame({'BN':BN_list, 'GP':GP_list, 'CR':CR_list, 'Ln':Ln_list, 'D':D_list, 
-                   'Biof':Biof_list, 'YSd':YSd_list})
-DF.to_csv('Graphs/Resultados_Corrida_'+datetime.strftime(variables['FeAc'], '%Y%m%d')+'.csv')
-
+                   'Biof':Biof_list, 'HI':HI_list})
+os.system('mkdir Output')
+DF.to_csv('Output/Resultados_Corrida_'+datetime.strftime(variables['FeAc'], '%Y%m%d')+'.csv')
 #La desviación estandar del rendimiento en ese periodo
 if variables['Germ']:
-    YSd = np.mean(variables['YSd'])
+    HI = variables['HI']
     #Si YSd < 0.05 la formación del rendimiento aún no inicia completamente
     #Y la optimización se hace con respecto a la biomasa
-    if YSd < 0.05:
+    if HI < 0.05 * HIx:
         Op_index = DF.loc[DF['Biof'] == DF['Biof'].max()].index
     else:
         Op_index = DF.loc[DF['BN'] == DF['BN'].max()].index
@@ -113,6 +118,8 @@ if variables['Germ']:
 
     print('La aplicacion de riego optima es de ' + str(DF['Ln'][Op_index]) + 'mm el '
           + datetime.strftime(DF['D'][Op_index], '%d-%m-%Y'))
+    DFAO = pd.DataFrame({'L':[DF['Ln'][Op_index]], 'D':[DF['D'][Op_index]]})
+    DFAO.to_csv('Output/AO_' + datetime.strftime(variables['FeAc'], '%Y%m%d') + '.csv', index=False)
 if variables['Cosecha']:
     print('Cosecha estimada para el ' + datetime.strftime(variables['FeCo'], "%d-%m-%Y"))        
 print('Hora de inicio : ' + hora_inicio)

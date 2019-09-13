@@ -22,6 +22,7 @@ def Incremento_Produccion(variables):
     KtrMean = variables['KtrMean']
     Ktrx = variables['Ktrx']
     Germ = variables['Germ']
+    HP = variables['HP']
     
     #Apertura de archivos de salida de AquaCrop
     CropGrowth = pd.read_table(os.path.join(PATH_AC_OUT, PROJECT_NAME + 
@@ -47,6 +48,8 @@ def Incremento_Produccion(variables):
              if Mask[i]]
     Season = [CropGrowth['Season'][i] for i in range(len(CropGrowth['Season'])) 
              if Mask[i]]
+    HI = [CropGrowth['HI'][i] for i in range(len(CropGrowth['HI'])) 
+             if Mask[i]]
         #Verifico si ya es cosecha o no
     Cosecha = bool()
     if Season[-1] == 0:
@@ -54,7 +57,7 @@ def Incremento_Produccion(variables):
     else:
         Cosecha = False    
         
-    if max(Bio[-7:]) != 0 or Cosecha:
+    if max(Bio[-HP:]) != 0 or Cosecha:
         Germ = True
         
         #Si ya se cosechó al final de la semana, busco el último día de producción
@@ -64,7 +67,7 @@ def Incremento_Produccion(variables):
                 index += 1
                 
         #Ajuste de CC de acuerdo con Villalobos and Fereres(1990)
-        i = CCref[-index - 1]
+        i = CCref[-index]
         CC_adj = 1.72*i-i**2+0.30*i**3
         
         #Calculo del coeficiente de transpiracion del cultivo al final del periodo
@@ -73,22 +76,22 @@ def Incremento_Produccion(variables):
         #Coeficiente de Fujimaki y Rendimiento al final del periodo
         Kif = KtrMean/Ktrf
         Yf = Yield[-index]
-        Yi = Yield[-7]
+        Yi = Yield[-HP]
         
         #En caso que el día actual sea el día siguiente a la cosecha
         if Yi == 0:
             Yi = Yf
         #Si el día actual es el día de la cosecha YSd = 0
-        if index == 7:
-            YSd = 0
+        if index == HP:
+            HIf = 0
         else:
-            YSd = np.std(Yield[-7:-index])
+            HIf = HI[-index]
         
         #Almaceno las variables
         Biof = Bio[-index]
         variables['Cosecha'] = Cosecha
         variables['Biof'] = Biof
-        variables['YSd'] = YSd
+        variables['HI'] = HIf 
         variables['Kif'] = Kif
         variables['InYf'] = Yf - Yi 
         variables['Germ'] = Germ

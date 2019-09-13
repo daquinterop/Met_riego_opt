@@ -11,7 +11,7 @@ import intercambio_variables
 from datetime import datetime
 from datetime import timedelta
 
-def init_irrigation(variables, zero=False, loop = True):
+def init_irrigation(variables, zero=False, loop=True):
     FILES_PATH = variables['FILES_PATH']
     f = open(os.path.join(FILES_PATH, 'IrrigationSchedule.txt'), 'r')
     IrrigationSchedulle = f.readlines()
